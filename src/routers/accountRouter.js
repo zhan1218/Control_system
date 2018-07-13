@@ -11,5 +11,15 @@ accountRouter.get('/login',accountCtrl.getLoginPage)
 
 // 获取图片验证码
 accountRouter.get('/vcode',accountCtrl.getImageVcode)
+
+// 获取注册页面
+accountRouter.get('/register',accountCtrl.getRegisterPage)
+
+// 处理注册请求
+accountRouter.post('/register',accountCtrl.register)
+
+//处理登录请求
+accountRouter.post('/login',accountCtrl.login)
+
 // 导出路由模块（路由中间件）
 module.exports=accountRouter
