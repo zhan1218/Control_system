@@ -42,9 +42,10 @@
                     <td>{{this.sex}}</td>
                     <td>{{this.phone}}</td>
                     <td>
-                        <a href="#" class="btn btn-success">编辑</a> |
-
-                        <input type="button" class="btn btn-danger" value="删除">
+                        <!-- 点击编辑发送请求,进入到编辑页面 -->
+                        <a href="/studentmanager/edit/{{this._id}}" class="btn btn-success">编辑</a> |
+                        <!-- 点击删除,发送请求,根据id删除信息 -->
+                        <input type="button" class="btn btn-danger" onclick="deleteStudent('{{this._id}}')" value="删除">
                     </td>
                 </tr>
                 {{/each}}
@@ -58,6 +59,12 @@
         const keyword = $("#studentNameId").val()
         // 模糊查询
         location.href = '/studentmanager/list?keyword='+keyword
+    }
+        // 删除信息
+       function deleteStudent(studentId){
+        if(confirm("确定删除吗?")){
+            location.href = `/studentmanager/delete/${studentId}`
+        }
     }
 </script>
 {{/block}}

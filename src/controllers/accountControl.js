@@ -1,11 +1,12 @@
 const path=require('path')
 // 引入图片验证码模板 npm--captchapng
 const captchapng = require('captchapng');
-const MongoClient = require('mongodb').MongoClient;
-// Connection URL
-const url = 'mongodb://localhost:27017';
-// Database Name
-const dbName = 'myData';
+// const MongoClient = require('mongodb').MongoClient;
+const databasetool = require(path.join(__dirname,"../tools/databasetool.js"))
+// Connection URL   抽取到tools模板
+// const url = 'mongodb://localhost:27017';
+// // Database Name 抽取到tools模板
+// const dbName = 'myData';
 
 
 // 暴露了一个获取登录页面的方法，给路由调用
@@ -50,37 +51,59 @@ exports.register=(req,res)=>{
   //es6的解构赋值 http://es6.ruanyifeng.com/  可直接获取对应的属性值
   const{username}=req.body
 
-  // 2.判断用户名是否存在，如存在就响应给客户；不存在就先插入到数据库，然后再响应注册成功
-  // node连接到mongodb服务端
-  MongoClient.connect(url, {useNewUrlParser: true},function(err, client) {
-      const db=client.db(dbName);
-
-      // 获取数据库里面的集合进行操作
-      const collection=db.collection('accountInfo');
-      //先根据用户名，查询该用户是否存在
-      collection.findOne({username},(err,doc)=>{
-          // 存在
+  //2. 调用databasetool方法，把要操作的集合和参数，传递给databasetool.js，等它操作完毕之后，调用回调函数把结果告诉我这个控制器
+    databasetool.findOne('accountInfo',{username},(err,doc)=>{
+        // 存在
           if(doc !=null){
             result.status = 1
             result.message = "用户名已经存在!"
-            client.close();
+  
             res.json(result)
           }else{
-              // 不存在--添加
-              // req.body = {username:'admin',password:'12345'}
-              collection.insertOne(req.body,(err,result1)=>{
-                 // 判断插入结果是否失败，如果失败就是null
-                 if(result1==null){
+            databasetool.insertOne('accountInfo',req.body,(err,result1)=>{
+                // 判断插入结果是否失败，如果失败就是null
+                if(result1 == null){
                     result.status = 2
                     result.message = "注册失败!"
-                 }
-                 client.close();
-                 res.json(result)
-              })
-
+                }             
+                res.json(result)
+            })
           }
-      })
-  })
+    })
+
+
+
+  // 2.判断用户名是否存在，如存在就响应给客户；不存在就先插入到数据库，然后再响应注册成功
+  // node连接到mongodb服务端
+//   MongoClient.connect(url, {useNewUrlParser: true},function(err, client) {
+//       const db=client.db(dbName);
+
+//       // 获取数据库里面的集合进行操作
+//       const collection=db.collection('accountInfo');
+//       //先根据用户名，查询该用户是否存在
+//       collection.findOne({username},(err,doc)=>{
+//           // 存在
+//           if(doc !=null){
+//             result.status = 1
+//             result.message = "用户名已经存在!"
+//             client.close();
+//             res.json(result)
+//           }else{
+//               // 不存在--添加
+//               // req.body = {username:'admin',password:'12345'}
+//               collection.insertOne(req.body,(err,result1)=>{
+//                  // 判断插入结果是否失败，如果失败就是null
+//                  if(result1==null){
+//                     result.status = 2
+//                     result.message = "注册失败!"
+//                  }
+//                  client.close();
+//                  res.json(result)
+//               })
+
+//           }
+//       })
+//   })
 
 }
 
@@ -103,22 +126,16 @@ exports.login=(req,res)=>{
         return
     }
     // 3.验证用户名和密码
-      //2.1 node连接到mongodb服务端
-  MongoClient.connect(url, {useNewUrlParser: true},function(err, client) {
-    //   const db=client.db(dbname);
-    const db = client.db(dbName);
-      // 获取mondodb数据库中的 集合进行操作
-      const collection=db.collection('accountInfo');
-      collection.findOne({username,password},(err,doc)=>{
-          if(doc == null){
-              // 如果返回的是空值null，说明数据库中没有该数据，没查寻到
-              result.status=2
-              result.message="用户名或密码错误！"
-          }
-          client.close()
-          res.json(result)
+      databasetool.findOne('accountInfo',{username,password},(err,doc)=>{
+        if(doc == null){//没查询到
+          result.status = 2
+          result.message = "用户名或密码错误"
+        }else{
+          req.session.loginedName = username
+        }
+        
+        res.json(result)
       })
-  })
 
 
 }
